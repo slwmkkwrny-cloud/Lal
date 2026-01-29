@@ -1,0 +1,132 @@
+-- Ravex Scripts Ultra V20 (Zero-Gravity Stabilizer)
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local UICorner = Instance.new("UICorner")
+local UIStroke = Instance.new("UIStroke")
+local Title = Instance.new("TextLabel")
+
+-- אבטחה
+ScreenGui.Name = game:GetService("HttpService"):GenerateGUID(false)
+ScreenGui.Parent = game:GetService("CoreGui")
+MainFrame.Name = game:GetService("HttpService"):GenerateGUID(false)
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+MainFrame.Position = UDim2.new(0.5, -100, 0.4, -150)
+MainFrame.Size = UDim2.new(0, 200, 0, 310)
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+UICorner.CornerRadius = UDim.new(0, 10)
+UICorner.Parent = MainFrame
+UIStroke.Color = Color3.fromRGB(0, 255, 150)
+UIStroke.Thickness = 2
+UIStroke.Parent = MainFrame
+
+Title.Parent = MainFrame
+Title.Size = UDim2.new(1, 0, 0, 45)
+Title.Text = "RAVEX SCRIPTS"
+Title.TextColor3 = Color3.fromRGB(0, 255, 150)
+Title.TextSize = 20
+Title.Font = Enum.Font.GothamBlack
+Title.BackgroundTransparency = 1
+
+local Toggles = { Speed = false, LowGrav = false, InstantGrab = false }
+
+local function createToggle(name, pos, toggleKey, callback)
+    local btn = Instance.new("TextButton")
+    local btnCorner = Instance.new("UICorner")
+    btn.Parent = MainFrame
+    btn.Size = UDim2.new(0.85, 0, 0, 35)
+    btn.Position = pos
+    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    btn.Text = name .. ": OFF"
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 11
+    btnCorner.Parent = btn
+
+    btn.MouseButton1Click:Connect(function()
+        Toggles[toggleKey] = not Toggles[toggleKey]
+        btn.Text = Toggles[toggleKey] and (name .. ": ON") or (name .. ": OFF")
+        btn.BackgroundColor3 = Toggles[toggleKey] and Color3.fromRGB(0, 150, 100) or Color3.fromRGB(40, 40, 40)
+        callback(Toggles[toggleKey])
+    end)
+end
+
+--- המערכת המייצבת ---
+
+local bf = Instance.new("BodyForce")
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    pcall(function()
+        local char = game.Players.LocalPlayer.Character
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        local hum = char:FindFirstChild("Humanoid")
+        
+        if hrp and hum then
+            -- טיפול במהירות (Undetected Velocity)
+            if Toggles.Speed and hum.MoveDirection.Magnitude > 0 then
+                hrp.Velocity = Vector3.new(hum.MoveDirection.X * 35, hrp.Velocity.Y, hum.MoveDirection.Z * 35)
+            end
+            
+            -- טיפול ב-Low Grav (שיטת הציפה המאוזנת)
+            if Toggles.LowGrav then
+                bf.Parent = hrp
+                -- חישוב כוח שמנטרל חלק מהגרביטי (מחשב משקל של כל חלקי הגוף)
+                local totalMass = 0
+                for _, part in pairs(char:GetChildren()) do
+                    if part:IsA("BasePart") then totalMass = totalMass + part:GetMass() end
+                end
+                -- 150 זה הערך שנותן ריחוף V13 בלי לעוף לשמיים
+                bf.Force = Vector3.new(0, totalMass * 150, 0) 
+                hum.JumpPower = 45
+            else
+                bf.Parent = nil
+                hum.JumpPower = 50
+            end
+        end
+    end)
+end)
+
+createToggle("Speed Booster", UDim2.new(0.075, 0, 0.16, 0), "Speed", function() end)
+createToggle("Low Grav", UDim2.new(0.075, 0, 0.30, 0), "LowGrav", function() end)
+
+-- 2. Instant Grab
+task.spawn(function()
+    while task.wait(0.5) do
+        if Toggles.InstantGrab then
+            for _, v in pairs(game:GetDescendants()) do
+                if v:IsA("ProximityPrompt") then v.HoldDuration = 0 end
+            end
+        end
+    end
+end)
+createToggle("Instant Grab", UDim2.new(0.075, 0, 0.44, 0), "InstantGrab", function() end)
+
+-- 3. FPS Boost & Exit
+local btnFPS = Instance.new("TextButton")
+btnFPS.Parent = MainFrame
+btnFPS.Size = UDim2.new(0.85, 0, 0, 35)
+btnFPS.Position = UDim2.new(0.075, 0, 0.58, 0)
+btnFPS.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+btnFPS.Text = "Low GFX (FPS Boost)"
+btnFPS.TextColor3 = Color3.fromRGB(255, 255, 255)
+btnFPS.Font = Enum.Font.GothamBold
+Instance.new("UICorner").Parent = btnFPS
+btnFPS.MouseButton1Click:Connect(function()
+    for _, v in pairs(game:GetDescendants()) do
+        if v:IsA("Part") or v:IsA("MeshPart") then v.Material = Enum.Material.Plastic end
+    end
+    btnFPS.Text = "Boosted!"
+end)
+
+local btnExit = Instance.new("TextButton")
+btnExit.Parent = MainFrame
+btnExit.Size = UDim2.new(0.85, 0, 0, 35)
+btnExit.Position = UDim2.new(0.075, 0, 0.82, 0)
+btnExit.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+btnExit.Text = "Exit Game"
+btnExit.TextColor3 = Color3.fromRGB(255, 255, 255)
+btnExit.Font = Enum.Font.GothamBold
+Instance.new("UICorner").Parent = btnExit
+btnExit.MouseButton1Click:Connect(function() game:Shutdown() end)
